@@ -157,6 +157,9 @@ class ConversationProcessView(http.HomeAssistantView):
     async def post(self, request, data):
         """Send a request for processing."""
         hass = request.app["hass"]
+
+        # TODO add intent.
+
         intent_result = await get_intent(
             hass, data["text"], data.get("conversation_id")
         )
@@ -181,6 +184,8 @@ class ConversationHandleView(http.HomeAssistantView):
     async def post(self, request, data):
         """Handle intent with name/data."""
         hass = request.app["hass"]
+
+        # TODO add intent.
 
         try:
             intent_name = data["name"]
