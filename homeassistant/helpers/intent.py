@@ -61,8 +61,6 @@ async def async_handle(
     if handler is None:
         raise UnknownIntent(f"Unknown intent {intent_type}")
 
-    # TODO is this what we want?
-
     if context is None:
         context = Context()
 
