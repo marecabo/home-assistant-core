@@ -1,12 +1,13 @@
 custom_cleaning:
   name: Custom Cleaning
   description: Zone Cleaning service call specific to Vorwerk Kobolds.
+  target:
+    device:
+      integration: vorwerk
+    entity:
+      integration: vorwerk
+      domain: vacuum
   fields:
-    entity_id:
-      name: "Vacuum Entity"
-      description: "Name of the vacuum entity."
-      example: "vacuum.my_vr"
-      required: true
     mode:
       name: "Cleaning Mode"
       description: "Set the cleaning mode: 'eco' or 'turbo' (default)."
