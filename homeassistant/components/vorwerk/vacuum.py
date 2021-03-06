@@ -61,9 +61,25 @@ SUPPORT_VORWERK = (
     | SUPPORT_LOCATE
 )
 
+ATTR_MODE_TURBO = "turbo"
+ATTR_MODE_ECO = "eco"
+ATTR_MODE_OPTIONS = {ATTR_MODE_TURBO: 2, ATTR_MODE_ECO: 1}
 
 ATTR_NAVIGATION = "navigation"
+ATTR_NAVIGATION_NORMAL = "normal"
+ATTR_NAVIGATION_EXTRA_CARE = "extra_care"
+ATTR_NAVIGATION_DEEP = "deep"
+ATTR_NAVIGATION_OPTIONS = {
+    ATTR_NAVIGATION_NORMAL: 1,
+    ATTR_NAVIGATION_EXTRA_CARE: 2,
+    ATTR_NAVIGATION_DEEP: 3,
+}
+
 ATTR_CATEGORY = "category"
+ATTR_CATEGORY_MAP = "map"
+ATTR_CATEGORY_NO_MAP = "no_map"
+ATTR_CATEGORY_OPTIONS = {ATTR_CATEGORY_NO_MAP: 2, ATTR_CATEGORY_MAP: 4}
+
 ATTR_ZONE = "zone"
 
 
@@ -85,9 +101,15 @@ async def async_setup_entry(hass, entry, async_add_entities):
     platform.async_register_entity_service(
         "custom_cleaning",
         {
-            vol.Optional(ATTR_MODE, default=2): cv.positive_int,
-            vol.Optional(ATTR_NAVIGATION, default=1): cv.positive_int,
-            vol.Optional(ATTR_CATEGORY, default=4): cv.positive_int,
+            vol.Optional(ATTR_MODE, default=ATTR_MODE_TURBO): vol.Any(
+                *ATTR_MODE_OPTIONS.keys()
+            ),
+            vol.Optional(ATTR_NAVIGATION, default=ATTR_NAVIGATION_NORMAL): vol.Any(
+                *ATTR_NAVIGATION_OPTIONS.keys()
+            ),
+            vol.Optional(ATTR_CATEGORY, default=ATTR_CATEGORY_MAP): vol.Any(
+                *ATTR_CATEGORY_OPTIONS.keys()
+            ),
             vol.Optional(ATTR_ZONE): cv.string,
         },
         "vorwerk_custom_cleaning",
@@ -379,7 +401,12 @@ class VorwerkConnectedVacuum(StateVacuumEntity):
 
         self._clean_state = STATE_CLEANING
         try:
-            self.robot.start_cleaning(mode, navigation, category, boundary_id)
+            self.robot.start_cleaning(
+                ATTR_MODE_OPTIONS[mode],
+                ATTR_NAVIGATION_OPTIONS[navigation],
+                ATTR_CATEGORY_OPTIONS[category],
+                boundary_id,
+            )
         except NeatoRobotException as ex:
             _LOGGER.error(
                 "Vorwerk vacuum connection error for '%s': %s", self.entity_id, ex

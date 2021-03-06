@@ -1,18 +1,47 @@
 custom_cleaning:
+  name: Custom Cleaning
   description: Zone Cleaning service call specific to Vorwerk Kobolds.
   fields:
     entity_id:
-      description: Name of the vacuum entity. [Required]
-      example: "vacuum.mein_vr"
+      name: "Vacuum Entity"
+      description: "Name of the vacuum entity."
+      example: "vacuum.my_vr"
+      required: true
     mode:
-      description: "Set the cleaning mode: 1 for eco and 2 for turbo. Defaults to turbo if not set."
-      example: 2
+      name: "Cleaning Mode"
+      description: "Set the cleaning mode: 'eco' or 'turbo' (default)."
+      default: turbo
+      example: turbo
+      selector:
+        select:
+          options:
+            - turbo
+            - eco
     navigation:
-      description: "Set the navigation mode: 1 for normal, 2 for extra care, 3 for deep. Defaults to normal if not set."
-      example: 1
+      name: "Navigation Mode"
+      description: "Set the navigation mode: 'normal' (default) 'extra_care' or 'deep'."
+      default: normal
+      example: normal
+      selector:
+        select:
+          options:
+            - normal
+            - extra_care
+            - deep
     category:
-      description: "Whether to use a persistent map or not for cleaning (i.e. No go lines): 2 for no map, 4 for map. Default to using map if not set (and fallback to no map if no map is found)."
-      example: 2
+      name: Category
+      description: "Whether to use a persistent map or not for cleaning (i.e. no-go lines): 'map' (default) or 'no_map' (fallback, if no map exists)."
+      default: map
+      example: map
+      advanced: true
+      selector:
+        select:
+          options:
+            - map
+            - no_map
     zone:
-      description: Only supported on the VR300. Name of the zone to clean. Defaults to no zone i.e. complete house cleanup.
+      name: Zone
+      description: "Name of the zone to clean. Defaults to no zone i.e. complete floor cleanup. Only supported by the VR300."
       example: "Kitchen"
+      selector:
+        text:
