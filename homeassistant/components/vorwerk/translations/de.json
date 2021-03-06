@@ -1,0 +1,28 @@
+{
+  "config": {
+      "abort": {
+          "already_configured": "Konto ist bereits konfiguriert.",
+          "invalid_auth": "Ung\u00fcltige Authentifizierung"
+      },
+      "error": {
+          "invalid_auth": "Ung\u00fcltige Authentifizierung"
+      },
+      "step": {
+          "code": {
+              "data": {
+                  "code": "Code"
+              },
+              "description": "Geben Sie die E-Mail-Adresse Ihres Vorwerk Kontos ein, um einen Best\u00e4tigungscode zu erhalten.\n\nSiehe [Vorwerk Dokumentation]({docs_url}).",
+              "title": "Vorwerk Konto"
+          },
+          "user": {
+              "data": {
+                  "email": "E-Mail"
+              },
+              "description": "Geben Sie den erhaltenen Best\u00e4tigungscode ein.\n\nSiehe [Vorwerk Dokumentation]({docs_url}).",
+              "title": "Vorwerk Konto"
+          }
+      }
+  },
+  "title": "Vorwerk Staubsaugerroboter"
+}
