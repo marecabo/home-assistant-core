@@ -102,7 +102,10 @@ class VorwerkConnectedVacuum(StateVacuumEntity):
         self.robot = robot
         self._available = False
         self._name = f"{self.robot.name}"
-        self._robot_has_map = False
+        self._robot_has_map = True
+        self._robot_maps = {
+            self.robot.serial: []
+        }  # add `{"name": "yourmapname", "id": "2020-02-09T17:12:43Z"}` as map emtry in list
         self._robot_serial = self.robot.serial
         self._status_state = None
         self._clean_state = None
@@ -187,6 +190,41 @@ class VorwerkConnectedVacuum(StateVacuumEntity):
             self._status_state = ERRORS.get(self._state["error"])
 
         self._battery_level = self._state["details"]["charge"]
+
+        if (
+            self._robot_has_map
+            and self._state["availableServices"]["maps"] != "basic-1"
+            and self._robot_maps[self._robot_serial]
+        ):
+            allmaps = self._robot_maps[self._robot_serial]
+            _LOGGER.debug(
+                "Found the following maps for '%s': %s", self.entity_id, allmaps
+            )
+            self._robot_boundaries = []  # Reset boundaries before refreshing boundaries
+            for maps in allmaps:
+                try:
+                    robot_boundaries = self.robot.get_map_boundaries(maps["id"]).json()
+                except NeatoRobotException as ex:
+                    _LOGGER.error(
+                        "Could not fetch map boundaries for '%s': %s",
+                        self.entity_id,
+                        ex,
+                    )
+                    return
+
+                _LOGGER.debug(
+                    "Boundaries for robot '%s' in map '%s': %s",
+                    self.entity_id,
+                    maps["name"],
+                    robot_boundaries,
+                )
+                if "boundaries" in robot_boundaries["data"]:
+                    self._robot_boundaries += robot_boundaries["data"]["boundaries"]
+                    _LOGGER.debug(
+                        "List of boundaries for '%s': %s",
+                        self.entity_id,
+                        self._robot_boundaries,
+                    )
 
     @property
     def name(self):
