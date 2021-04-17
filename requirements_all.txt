@@ -980,6 +980,9 @@ mychevy==2.1.1
 # homeassistant.components.mycroft
 mycroftapi==2.0
 
+# homeassistant.components.myjdownloader
+myjdapi==1.0.6
+
 # homeassistant.components.nad
 nad_receiver==0.0.12
 
