@@ -220,6 +220,7 @@ FLOWS = {
         "mqtt",
         "mullvad",
         "mutesync",
+        "myjdownloader",
         "myq",
         "mysensors",
         "nam",
