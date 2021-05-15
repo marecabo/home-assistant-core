@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+from pybotvac import Account
 from pybotvac.exceptions import NeatoException
 from requests.models import HTTPError
 import voluptuous as vol
@@ -15,6 +16,7 @@ from . import api
 # pylint: disable=unused-import
 from .const import (
     VORWERK_DOMAIN,
+    VORWERK_PERSISTENT_MAPS,
     VORWERK_ROBOT_ENDPOINT,
     VORWERK_ROBOT_NAME,
     VORWERK_ROBOT_SECRET,
@@ -69,12 +71,16 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
                 robots = await self.hass.async_add_executor_job(
                     self._get_robots, self._email, code
                 )
+                persistent_maps = await self.hass.async_add_executor_job(
+                    self._get_persistent_maps
+                )
                 return self.async_create_entry(
                     title=self._email,
                     data={
                         CONF_EMAIL: self._email,
                         CONF_TOKEN: self._session.token,
                         VORWERK_ROBOTS: robots,
+                        VORWERK_PERSISTENT_MAPS: persistent_maps,
                     },
                 )
             except (HTTPError, NeatoException):
@@ -122,3 +128,21 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
             }
             for robot in self._session.get("users/me/robots").json()
         ]
+
+    def _get_persistent_maps(self):
+        """Fetch id, name and image of persistent maps."""
+        account = Account(self._session)
+
+        persistent_maps = account.persistent_maps.copy()
+        for robot_serial, maps in persistent_maps.items():
+            _LOGGER.debug("Found persistent maps: %s", [m["name"] for m in maps])
+            for i, map in enumerate(maps):
+                # download image of map
+                persistent_maps[robot_serial][i].update(
+                    {"image": account.get_map_image(map["url"]).data}
+                )
+                # remove keys which are unnecessary in config
+                for key in ["url", "raw_floor_map_url", "url_valid_for_seconds"]:
+                    del persistent_maps[robot_serial][i][key]
+
+        return persistent_maps

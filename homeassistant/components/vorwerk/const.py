@@ -4,6 +4,7 @@ from datetime import timedelta
 VORWERK_DOMAIN = "vorwerk"
 
 VORWERK_ROBOTS = "robots"
+VORWERK_PERSISTENT_MAPS = "persistent_maps"
 VORWERK_ROBOT_API = "robot_api"
 VORWERK_ROBOT_COORDINATOR = "robot_coordinator"
 
