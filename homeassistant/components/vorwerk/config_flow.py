@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from pybotvac import Account
+import pybotvac
 from pybotvac.exceptions import NeatoException
 from requests.models import HTTPError
 import voluptuous as vol
@@ -11,10 +11,9 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_CODE, CONF_EMAIL, CONF_TOKEN
 
-from . import api
-
 # pylint: disable=unused-import
 from .const import (
+    VORWERK_CLIENT_ID,
     VORWERK_DOMAIN,
     VORWERK_ROBOT_ENDPOINT,
     VORWERK_ROBOT_NAME,
@@ -39,7 +38,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
     def __init__(self):
         """Initialize the config flow."""
         self._email: str | None = None
-        self._session = api.VorwerkSession()
+        self._session = VorwerkSession()
 
     async def async_step_user(self, user_input=None):
         """Step when user initializes a integration."""
@@ -142,7 +141,7 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
 
     def _get_persistent_maps(self):
         """Fetch id, name and image of persistent maps."""
-        account = Account(self._session)
+        account = pybotvac.Account(self._session)
         persistent_maps = account.persistent_maps.copy()
         _LOGGER.debug("Persistent Maps: %s", persistent_maps)
 
@@ -157,3 +156,16 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
                 for key in ["url", "raw_floor_map_url", "url_valid_for_seconds"]:
                     del persistent_maps[robot_serial][i][key]
         return persistent_maps
+
+
+class VorwerkSession(pybotvac.PasswordlessSession):
+    """PasswordlessSession pybotvac session for Vorwerk cloud."""
+
+    def __init__(self):
+        """Initialize Vorwerk cloud session."""
+        super().__init__(client_id=VORWERK_CLIENT_ID, vendor=pybotvac.Vorwerk())
+
+    @property
+    def token(self):
+        """Return the token dict. Contains id_token, access_token and refresh_token."""
+        return self._token
