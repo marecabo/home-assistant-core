@@ -30,11 +30,7 @@ from .const import (
     ERRORS,
     MIN_TIME_BETWEEN_UPDATES,
     MODE,
-    ROBOT_ACTION_HOUSE_CLEANING,
-    ROBOT_ACTION_MANUAL_CLEANING,
-    ROBOT_ACTION_MAP_CLEANING,
-    ROBOT_ACTION_MAP_EXPLORING,
-    ROBOT_ACTION_SPOT_CLEANING,
+    ROBOT_CLEANING_ACTIONS,
     ROBOT_STATE_BUSY,
     ROBOT_STATE_ERROR,
     ROBOT_STATE_IDLE,
@@ -289,19 +285,10 @@ class VorwerkState:
         elif robot_state == ROBOT_STATE_IDLE:
             state = STATE_IDLE
         elif robot_state == ROBOT_STATE_BUSY:
-            # _LOGGER.debug("Robot Action: %s", self.robot_state.get("action"))
-            action = self.robot_state.get("action")
-            if action not in [
-                ROBOT_ACTION_HOUSE_CLEANING,
-                ROBOT_ACTION_SPOT_CLEANING,
-                ROBOT_ACTION_MANUAL_CLEANING,
-                # ROBOT_ACTION_DOCKING,
-                ROBOT_ACTION_MAP_CLEANING,
-                ROBOT_ACTION_MAP_EXPLORING,
-            ]:
-                state = STATE_RETURNING
-            else:
+            if self.robot_state.get("action") in ROBOT_CLEANING_ACTIONS:
                 state = STATE_CLEANING
+            else:
+                state = STATE_RETURNING
         elif robot_state == ROBOT_STATE_PAUSE:
             state = STATE_PAUSED
         elif robot_state == ROBOT_STATE_ERROR:
