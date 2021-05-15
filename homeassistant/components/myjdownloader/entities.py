@@ -100,6 +100,14 @@ class MyJDownloaderDeviceEntity(MyJDownloaderEntity):
             "entry_type": "service",
         }
 
+    async def async_update(self) -> None:
+        """Update MyJDownloader entity."""
+        if self._device_id in self.hub.devices:
+            self._available = True
+            await super().async_update()
+        else:
+            self._available = False
+
     # Services are registered in setup of sensor platform for each JDownloader.
     async def restart_and_update(self):
         """Service call to restart and update JDownloader."""

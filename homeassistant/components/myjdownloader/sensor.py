@@ -185,7 +185,8 @@ class MyJDownloaderJDownloadersOnlineSensor(MyJDownloaderSensor):
 
     async def _myjdownloader_update(self) -> None:
         """Update MyJDownloader entity."""
-        self.devices = await self.hub.async_update_devices()
+        await self.hub.async_update_devices()
+        self.devices = self.hub.devices
         self._state = len(self.devices)
 
     @property
