@@ -22,6 +22,7 @@ from .const import (
     VORWERK_ROBOT_COORDINATOR,
     VORWERK_ROBOT_ENDPOINT,
     VORWERK_ROBOT_NAME,
+    VORWERK_ROBOT_PERSISTENT_MAPS,
     VORWERK_ROBOT_SECRET,
     VORWERK_ROBOT_SERIAL,
     VORWERK_ROBOT_TRAITS,
@@ -68,9 +69,19 @@ async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
     """Set up config entry."""
-    robots = await _async_create_robots(hass, entry.data[VORWERK_ROBOTS])
+    robots_configs = entry.data[VORWERK_ROBOTS]
+    robots = await _async_create_robots(hass, robots_configs)
 
-    robot_states = [VorwerkState(robot) for robot in robots]
+    robot_states = []
+    for robot in robots:
+        # get config of current robot for retrieval of map list
+        robot_config = [
+            r for r in robots_configs if r[VORWERK_ROBOT_SERIAL] == robot.serial
+        ][0]
+        _LOGGER.debug(robot_config)
+        robot_states.append(
+            VorwerkState(robot, robot_config.get(VORWERK_ROBOT_PERSISTENT_MAPS, []))
+        )
 
     hass.data[VORWERK_DOMAIN][entry.entry_id] = {
         VORWERK_ROBOTS: [
@@ -112,6 +123,7 @@ async def _async_create_robots(hass, robot_confs):
             serial=config[VORWERK_ROBOT_SERIAL],
             secret=config[VORWERK_ROBOT_SECRET],
             traits=config.get(VORWERK_ROBOT_TRAITS, []),
+            has_persistent_maps=VORWERK_ROBOT_PERSISTENT_MAPS in config,
             vendor=Vorwerk(),
             name=config[VORWERK_ROBOT_NAME],
             endpoint=config[VORWERK_ROBOT_ENDPOINT],

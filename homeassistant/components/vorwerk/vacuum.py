@@ -215,7 +215,7 @@ class VorwerkConnectedVacuum(CoordinatorEntity, StateVacuumEntity):
         """Zone cleaning service call."""
         boundary_id = None
         if zone is not None:
-            for boundary in self._robot_boundaries:
+            for boundary in self._state.robot_boundaries:
                 if zone in boundary["name"]:
                     boundary_id = boundary["id"]
             if boundary_id is None:

@@ -21,7 +21,11 @@ from .const import (
     ALERTS,
     ERRORS,
     MODE,
-    ROBOT_ACTION_DOCKING,
+    ROBOT_ACTION_HOUSE_CLEANING,
+    ROBOT_ACTION_MANUAL_CLEANING,
+    ROBOT_ACTION_MAP_CLEANING,
+    ROBOT_ACTION_MAP_EXPLORING,
+    ROBOT_ACTION_SPOT_CLEANING,
     ROBOT_STATE_BUSY,
     ROBOT_STATE_ERROR,
     ROBOT_STATE_IDLE,
@@ -51,11 +55,13 @@ class VorwerkSession(pybotvac.PasswordlessSession):
 class VorwerkState:
     """Class to convert robot_state dict to more useful object."""
 
-    def __init__(self, robot: pybotvac.Robot) -> None:
+    def __init__(self, robot: pybotvac.Robot, maps=[]) -> None:
         """Initialize new vorwerk vacuum state."""
         self.robot = robot
         self.robot_state: dict[Any, Any] = {}
         self.robot_info: dict[Any, Any] = {}
+        self.robot_maps: list[dict] = maps
+        self.robot_boundaries: list[dict] = []
 
     @property
     def available(self) -> bool:
@@ -67,6 +73,15 @@ class VorwerkState:
         _LOGGER.debug("Running Vorwerk Vacuums update for '%s'", self.robot.name)
         self._update_robot_info()
         self._update_state()
+        self._update_map_boundaries()
+
+        _LOGGER.debug(self.robot.state["cleaning"])
+        # if self.robot.state["cleaning"].get("mapId", ""):
+        #     # we observed a new mapId and should remember it
+        #     self.robot_maps.add(self.robot.state["cleaning"]["mapId"])
+        # # self.robot_maps.add("2021-03-06T09:11:59Z")
+        _LOGGER.debug(self.robot_maps)
+        # await hass.async_add_executor_job()
 
     def _update_state(self):
         try:
@@ -85,6 +100,32 @@ class VorwerkState:
                 )
             self.robot_state = {}
             return
+
+    def _update_map_boundaries(self):
+        """Update list of map boundaries if robot has persistent maps."""
+        self.robot_boundaries = []
+        for map in self.robot_maps:
+            try:
+                robot_boundaries = self.robot.get_map_boundaries(map["id"]).json()
+            except NeatoRobotException as ex:
+                _LOGGER.error(
+                    "Could not fetch map boundaries for '%s': %s",
+                    self.robot.name,
+                    ex,
+                )
+            _LOGGER.debug(
+                "Boundaries for robot '%s' in map '%s': %s",
+                self.robot.name,
+                map["name"],
+                robot_boundaries,
+            )
+            if "boundaries" in robot_boundaries["data"]:
+                self.robot_boundaries += robot_boundaries["data"]["boundaries"]
+        _LOGGER.debug(
+            "List of boundaries for '%s': %s",
+            self.robot.name,
+            self.robot_boundaries,
+        )
 
     @property
     def docked(self) -> bool | None:
@@ -118,7 +159,16 @@ class VorwerkState:
         elif robot_state == ROBOT_STATE_IDLE:
             state = STATE_IDLE
         elif robot_state == ROBOT_STATE_BUSY:
-            if robot_state["action"] != ROBOT_ACTION_DOCKING:
+            # _LOGGER.debug("Robot Action: %s", self.robot_state.get("action"))
+            action = self.robot_state.get("action")
+            if action not in [
+                ROBOT_ACTION_HOUSE_CLEANING,
+                ROBOT_ACTION_SPOT_CLEANING,
+                ROBOT_ACTION_MANUAL_CLEANING,
+                # ROBOT_ACTION_DOCKING,
+                ROBOT_ACTION_MAP_CLEANING,
+                ROBOT_ACTION_MAP_EXPLORING,
+            ]:
                 state = STATE_RETURNING
             else:
                 state = STATE_CLEANING
@@ -126,6 +176,7 @@ class VorwerkState:
             state = STATE_PAUSED
         elif robot_state == ROBOT_STATE_ERROR:
             state = STATE_ERROR
+
         return state
 
     @property
@@ -155,6 +206,8 @@ class VorwerkState:
                 status = "Docked"
         elif self.state == STATE_IDLE:
             status = "Stopped"
+        elif self.state == STATE_RETURNING:
+            status = "Returning"
         elif self.state == STATE_CLEANING:
             status = self._cleaning_status()
         elif self.state == STATE_PAUSED:

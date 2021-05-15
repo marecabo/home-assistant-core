@@ -16,9 +16,9 @@ from . import api
 # pylint: disable=unused-import
 from .const import (
     VORWERK_DOMAIN,
-    VORWERK_PERSISTENT_MAPS,
     VORWERK_ROBOT_ENDPOINT,
     VORWERK_ROBOT_NAME,
+    VORWERK_ROBOT_PERSISTENT_MAPS,
     VORWERK_ROBOT_SECRET,
     VORWERK_ROBOT_SERIAL,
     VORWERK_ROBOT_TRAITS,
@@ -68,19 +68,30 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
         code = user_input.get(CONF_CODE) if user_input else None
         if code:
             try:
+                # get config of robots
                 robots = await self.hass.async_add_executor_job(
                     self._get_robots, self._email, code
                 )
+                # get persistent maps of robots
                 persistent_maps = await self.hass.async_add_executor_job(
                     self._get_persistent_maps
                 )
+                # add persistent maps info to robot config
+                for robot_serial, maps in persistent_maps.items():
+                    for i, robot_config in enumerate(robots):
+                        if robot_config[VORWERK_ROBOT_SERIAL] == robot_serial:
+                            robots[i].update(
+                                {
+                                    VORWERK_ROBOT_PERSISTENT_MAPS: maps,
+                                }
+                            )
+                _LOGGER.debug(robots)
                 return self.async_create_entry(
                     title=self._email,
                     data={
                         CONF_EMAIL: self._email,
                         CONF_TOKEN: self._session.token,
                         VORWERK_ROBOTS: robots,
-                        VORWERK_PERSISTENT_MAPS: persistent_maps,
                     },
                 )
             except (HTTPError, NeatoException):
@@ -132,8 +143,9 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
     def _get_persistent_maps(self):
         """Fetch id, name and image of persistent maps."""
         account = Account(self._session)
-
         persistent_maps = account.persistent_maps.copy()
+        _LOGGER.debug("Persistent Maps: %s", persistent_maps)
+
         for robot_serial, maps in persistent_maps.items():
             _LOGGER.debug("Found persistent maps: %s", [m["name"] for m in maps])
             for i, map in enumerate(maps):
@@ -144,5 +156,4 @@ class VorwerkConfigFlow(config_entries.ConfigFlow, domain=VORWERK_DOMAIN):
                 # remove keys which are unnecessary in config
                 for key in ["url", "raw_floor_map_url", "url_valid_for_seconds"]:
                     del persistent_maps[robot_serial][i][key]
-
         return persistent_maps
