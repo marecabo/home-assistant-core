@@ -110,6 +110,9 @@ class MyJDownloaderHub:
             _LOGGER.debug("JDownloader (%s) is offline", self._devices[device_id].name)
             del self._devices[device_id]
 
+        # TODO additionally trigger update of sensor for number of devices immediately
+        # http://dev-docs.home-assistant.io/en/master/api/helpers.html#module-homeassistant.helpers.dispatcher
+
         return self._devices
 
     @property
