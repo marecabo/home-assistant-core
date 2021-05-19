@@ -3,6 +3,8 @@
 import logging
 from string import Template
 
+from myjdapi.exception import MYJDConnectionException
+
 from homeassistant.helpers.entity import Entity
 
 from . import MyJDownloaderHub
@@ -56,6 +58,8 @@ class MyJDownloaderEntity(Entity):
         try:
             await self._myjdownloader_update()
             self._available = True
+        except MYJDConnectionException:
+            self._available = False
         except Exception:
             if self._available:
                 _LOGGER.debug(
