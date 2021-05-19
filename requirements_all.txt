@@ -1050,7 +1050,7 @@ mutesync==0.0.1
 mycroftapi==2.0
 
 # homeassistant.components.myjdownloader
-myjdapi==1.0.7
+myjdapi==1.1.0
 
 # homeassistant.components.nad
 nad_receiver==0.3.0
