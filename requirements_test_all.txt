@@ -724,7 +724,7 @@ mutagen==1.45.1
 mutesync==0.0.1
 
 # homeassistant.components.myjdownloader
-myjdapi==1.1.0
+myjdapi==1.1.1
 
 # homeassistant.components.keenetic_ndms2
 ndms2_client==0.1.1

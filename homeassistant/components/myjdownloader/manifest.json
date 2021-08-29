@@ -2,8 +2,10 @@
   "domain": "myjdownloader",
   "name": "MyJDownloader",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/myjdownloader",
-  "requirements": ["myjdapi==1.1.0"],
+  "documentation": "https://github.com/doudz/homeassistant-myjdownloader",
+  "issue_tracker": "https://github.com/doudz/homeassistant-myjdownloader/issues",
+  "requirements": ["myjdapi==1.1.1"],
+  "dependencies": [],
   "codeowners": ["@doudz", "@oribafi"],
   "iot_class": "cloud_polling"
 }
