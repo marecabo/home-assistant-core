@@ -77,7 +77,7 @@ IGNORED_MODULES: Final[list[str]] = [
     "homeassistant.components.minecraft_server",
     "homeassistant.components.minecraft_server.helpers",
     "homeassistant.components.minecraft_server.sensor",
-    "homeassistant.components.myjdownloader.*",
+    "homeassistant.components.myjdownloader",
     "homeassistant.components.nilu.air_quality",
     "homeassistant.components.nzbget",
     "homeassistant.components.nzbget.config_flow",

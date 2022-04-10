@@ -4,8 +4,9 @@ from __future__ import annotations
 import logging
 from string import Template
 
-from myjdapi.exception import MYJDConnectionException
+from myjdapi.exception import MYJDConnectionException, MYJDException
 
+from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo, Entity
 
 from . import MyJDownloaderHub
@@ -68,7 +69,7 @@ class MyJDownloaderEntity(Entity):
             self._available = True
         except MYJDConnectionException:
             self._available = False
-        except Exception:
+        except MYJDException:
             if self._available:
                 _LOGGER.debug(
                     "An error occurred while updating MyJDownloader sensor",
@@ -110,7 +111,7 @@ class MyJDownloaderDeviceEntity(MyJDownloaderEntity):
             name=f"JDownloader {self._device_name}",
             manufacturer="AppWork GmbH",
             model=self._device_type,
-            entry_type="service",
+            entry_type=DeviceEntryType.SERVICE,
         )
 
     async def async_update(self) -> None:

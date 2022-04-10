@@ -653,7 +653,8 @@ build.json @home-assistant/supervisor
 /tests/components/mutesync/ @currentoor
 /homeassistant/components/my/ @home-assistant/core
 /tests/components/my/ @home-assistant/core
-homeassistant/components/myjdownloader/* @doudz @oribafi
+/homeassistant/components/myjdownloader/ @doudz @oribafi
+/tests/components/myjdownloader/ @doudz @oribafi
 /homeassistant/components/myq/ @bdraco @ehendrix23
 /tests/components/myq/ @bdraco @ehendrix23
 /homeassistant/components/mysensors/ @MartinHjelmare @functionpointer
