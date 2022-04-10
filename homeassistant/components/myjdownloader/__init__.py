@@ -11,10 +11,15 @@ from typing import Dict
 from myjdapi.exception import MYJDConnectionException
 from myjdapi.myjdapi import Jddevice, Myjdapi, MYJDException
 
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
+from homeassistant.components.update import DOMAIN as UPDATE_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.util import Throttle
 
@@ -31,7 +36,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "binary_sensor", "switch"]
+PLATFORMS = [SENSOR_DOMAIN, BINARY_SENSOR_DOMAIN, SWITCH_DOMAIN, UPDATE_DOMAIN]
 
 
 class MyJDownloaderHub:
@@ -40,6 +45,7 @@ class MyJDownloaderHub:
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the MyJDownloader hub."""
         self._hass = hass
+        self._websession = async_get_clientsession(self._hass)
         self._sem = asyncio.Semaphore(1)  # API calls need to be sequential
         self.myjd = Myjdapi()
         self.myjd.set_app_key(MYJDAPI_APP_KEY)
@@ -127,6 +133,14 @@ class MyJDownloaderHub:
         except Exception as ex:
             raise Exception(f"JDownloader ({device_id}) not online") from ex
 
+    async def make_request(self, url):
+        """Make a http request."""
+        async with self._websession.get(url) as resp:
+            if resp.status == 200:
+                return await resp.text()
+            else:
+                raise Exception("Request failed")  # Todo: specific exception
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up MyJDownloader from a config entry."""
@@ -151,6 +165,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # setup platforms
     for platform in PLATFORMS:
+
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, platform)
         )
