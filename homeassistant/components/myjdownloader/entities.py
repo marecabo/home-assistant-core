@@ -7,7 +7,7 @@ from string import Template
 from myjdapi.exception import MYJDConnectionException, MYJDException
 
 from homeassistant.helpers.device_registry import DeviceEntryType
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
 
 from . import MyJDownloaderHub
 from .const import DOMAIN
@@ -22,8 +22,8 @@ class MyJDownloaderEntity(Entity):
         self,
         hub: MyJDownloaderHub,
         name: str,
-        icon: str,
-        entity_category: str | None = None,
+        icon: str | None,
+        entity_category: EntityCategory | None = None,
         enabled_default: bool = True,
     ) -> None:
         """Initialize the MyJDownloader entity."""
@@ -40,12 +40,12 @@ class MyJDownloaderEntity(Entity):
         return self._name
 
     @property
-    def icon(self) -> str:
+    def icon(self) -> str | None:
         """Return the mdi icon of the entity."""
         return self._icon
 
     @property
-    def entity_category(self) -> str | None:
+    def entity_category(self) -> EntityCategory | None:
         """Return the category of the entity."""
         return self._entity_category
 
@@ -90,8 +90,8 @@ class MyJDownloaderDeviceEntity(MyJDownloaderEntity):
         hub: MyJDownloaderHub,
         device_id: str,
         name_template: str,
-        icon: str,
-        entity_category: str | None = None,
+        icon: str | None,
+        entity_category: EntityCategory | None = None,
         enabled_default: bool = True,
     ) -> None:
         """Initialize the MyJDownloader device entity."""

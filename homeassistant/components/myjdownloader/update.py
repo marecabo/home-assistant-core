@@ -64,15 +64,15 @@ class MyJDownloaderUpdate(MyJDownloaderDeviceEntity, UpdateEntity):
         hub: MyJDownloaderHub,
         device_id: str,
         name_template: str,
-        icon: str | None,
+        icon: str,
         measurement: str,
         device_class: str = None,
-        entity_category: EntityCategory | None = None,
+        entity_category: str | None = None,
         enabled_default: bool = True,
     ) -> None:
         """Initialize MyJDownloader update."""
-        self._state: str | None = None  # current version
-        self._latest_version: str | None = None
+        self._state = None  # current version
+        self._latest_version = None
         self._device_class = device_class
         self.measurement = measurement
         super().__init__(
@@ -129,32 +129,22 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
             EntityCategory.DIAGNOSTIC,
         )
         self._update_available = False
-        self._latest_version_checked_at: datetime.datetime = (
-            datetime.datetime.utcfromtimestamp(0)
-        )
-        self._latest_version_date: str | None = None
+        self._latest_version_checked_at = datetime.datetime.utcfromtimestamp(0)
+        self._latest_version_date = None
 
     async def _myjdownloader_update(self) -> None:
         """Update MyJDownloader entity."""
         device = self.hub.get_device(self._device_id)
         update_available = await self.hub.async_query(device.update.is_update_available)
         if self._state is None or self._update_available != update_available:
-            self._state = str(await self.hub.async_query(device.jd.get_core_revision))
+            self._state = await self.hub.async_query(device.jd.get_core_revision)
 
-        if (
-            self._latest_version is None or self._update_available != update_available
-        ) or (
-            update_available
-            and (
-                datetime.datetime.utcnow() - self._latest_version_checked_at
-            ).total_seconds()
-            > LATEST_VERSION_SCAN_INTERVAL_SECONDS
-        ):
+        if (self._latest_version is None or self._update_available != update_available) or (update_available and (datetime.datetime.utcnow() - self._latest_version_checked_at).total_seconds() > LATEST_VERSION_SCAN_INTERVAL_SECONDS):
             await self._update_latest_version()
         self._update_available = update_available
 
     @Throttle(datetime.timedelta(seconds=SCAN_INTERVAL_SECONDS))
-    async def _update_latest_version(self) -> None:
+    async def _update_latest_version(self) -> tuple | None:
         """Query the latest core revision."""
         try:
             response_text = await self.hub.make_request(LATEST_VERSION_URL)
@@ -162,8 +152,8 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
             _LOGGER.warning("Failed to query latest version")
         else:
             response_text = "".join(response_text.split())
-            if match := re.match(LATEST_VERSION_REGEX, response_text):
-                self._latest_version = match.group(1)
+            if (match := re.match(LATEST_VERSION_REGEX, response_text)):
+                self._latest_version = int(match.group(1))
                 self._latest_version_date = match.group(2)
                 self._latest_version_checked_at = datetime.datetime.utcnow()
 
@@ -172,8 +162,4 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
     ) -> None:
         """Install update."""
         device = self.hub.get_device(self._device_id)
-        await self.hub.async_query(
-            device.update.restart_and_update,
-            no_throttle=True,
-            limit_no_throttle=datetime.timedelta(0),
-        )
+        await self.hub.async_query(device.update.restart_and_update, no_throttle=True, limit_no_throttle=datetime.timedelta(0))
