@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+from http.client import HTTPException
 import logging
 import re
 from typing import Any
@@ -64,15 +65,15 @@ class MyJDownloaderUpdate(MyJDownloaderDeviceEntity, UpdateEntity):
         hub: MyJDownloaderHub,
         device_id: str,
         name_template: str,
-        icon: str,
+        icon: str | None,
         measurement: str,
         device_class: str = None,
-        entity_category: str | None = None,
+        entity_category: EntityCategory | None = None,
         enabled_default: bool = True,
     ) -> None:
         """Initialize MyJDownloader update."""
         self._state = None  # current version
-        self._latest_version = None
+        self._latest_version: str | None = None
         self._device_class = device_class
         self.measurement = measurement
         super().__init__(
@@ -128,9 +129,11 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
             None,
             EntityCategory.DIAGNOSTIC,
         )
-        self._update_available = False
-        self._latest_version_checked_at = datetime.datetime.utcfromtimestamp(0)
-        self._latest_version_date = None
+        self._update_available: bool = False
+        self._latest_version_checked_at: datetime.datetime = (
+            datetime.datetime.utcfromtimestamp(0)
+        )
+        self._latest_version_date: datetime.datetime | None = None
 
     async def _myjdownloader_update(self) -> None:
         """Update MyJDownloader entity."""
@@ -139,21 +142,37 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
         if self._state is None or self._update_available != update_available:
             self._state = await self.hub.async_query(device.jd.get_core_revision)
 
-        if (self._latest_version is None or self._update_available != update_available) or (update_available and (datetime.datetime.utcnow() - self._latest_version_checked_at).total_seconds() > LATEST_VERSION_SCAN_INTERVAL_SECONDS):
-            await self._update_latest_version()
+        if LATEST_VERSION_SCAN_INTERVAL_SECONDS > 0:
+            if (
+                self._latest_version is None
+                or self._update_available != update_available
+            ) or (
+                update_available
+                and (
+                    datetime.datetime.utcnow() - self._latest_version_checked_at
+                ).total_seconds()
+                > LATEST_VERSION_SCAN_INTERVAL_SECONDS
+            ):
+                await self._update_latest_version()
+        else:  # do not do latest version checks
+            if update_available:
+                # Note, a second update will not unskip a previously skipped update
+                self._latest_version = str(self._state) + "+"
+            else:
+                self._latest_version = str(self._state)
         self._update_available = update_available
 
     @Throttle(datetime.timedelta(seconds=SCAN_INTERVAL_SECONDS))
-    async def _update_latest_version(self) -> tuple | None:
+    async def _update_latest_version(self) -> None:
         """Query the latest core revision."""
         try:
             response_text = await self.hub.make_request(LATEST_VERSION_URL)
-        except Exception:
+        except HTTPException:
             _LOGGER.warning("Failed to query latest version")
         else:
             response_text = "".join(response_text.split())
-            if (match := re.match(LATEST_VERSION_REGEX, response_text)):
-                self._latest_version = int(match.group(1))
+            if match := re.match(LATEST_VERSION_REGEX, response_text):
+                self._latest_version = match.group(1)
                 self._latest_version_date = match.group(2)
                 self._latest_version_checked_at = datetime.datetime.utcnow()
 
@@ -162,4 +181,4 @@ class MyJDownloaderUpdateEntity(MyJDownloaderUpdate):
     ) -> None:
         """Install update."""
         device = self.hub.get_device(self._device_id)
-        await self.hub.async_query(device.update.restart_and_update, no_throttle=True, limit_no_throttle=datetime.timedelta(0))
+        await self.hub.async_query(device.update.restart_and_update)

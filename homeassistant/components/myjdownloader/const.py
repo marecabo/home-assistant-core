@@ -4,8 +4,8 @@ DOMAIN = "myjdownloader"
 
 SCAN_INTERVAL_SECONDS = 60
 
-LATEST_VERSION_SCAN_INTERVAL_SECONDS = 900
-LATEST_VERSION_URL = "https://svn.jdownloader.org/build.php?check="
+LATEST_VERSION_SCAN_INTERVAL_SECONDS = 1800  # disabled, if <= 0
+LATEST_VERSION_URL = "https://svn.jdownloader.org/build.php"
 LATEST_VERSION_REGEX = (
     r".*LatestRevision:[^\d+]+(\d+)[^\d+]+Date:[^\d+]+<[^>]+>([^<]+).*"
 )
